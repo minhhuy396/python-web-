@@ -144,7 +144,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'apikey'
 EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_API_KEY')
 
-DEFAULT_FROM_EMAIL = 'your_email@example.com'
+DEFAULT_FROM_EMAIL = 'nmhuy396@gmail.com'
 import cloudinary
 
 cloudinary.config(
