@@ -239,7 +239,7 @@ def checkout(request):
         items.delete()
 
         # 👉 KHÔNG redirect Zalo nữa
-        return redirect('home')  # hoặc 'success'
+        return redirect('order_success')  # hoặc 'success'
 
     return render(request, 'checkout.html', {
         'items': items,
