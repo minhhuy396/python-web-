@@ -4,6 +4,8 @@ from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.conf import settings
+import urllib.parse
+import requests
 
 from .models import Product, ProductImage, Cart, CartItem, OrderItem, Order, Category
 
@@ -169,18 +171,17 @@ def cart_view(request):
 # =========================
 @login_required
 def checkout(request):
-
     cart = Cart.objects.get(user=request.user)
     items = CartItem.objects.filter(cart=cart)
 
     total = sum(item.product.price * item.quantity for item in items)
 
     if request.method == "POST":
-
         name = request.POST['name']
         phone = request.POST['phone']
         address = request.POST['address']
 
+        # Tạo đơn hàng
         order = Order.objects.create(
             user=request.user,
             name=name,
@@ -189,14 +190,15 @@ def checkout(request):
             total=total
         )
 
+        # Nội dung Telegram
         message = f"""
-📦 Có đơn hàng mới từ website
+📦 ĐƠN HÀNG MỚI
 
-Tên khách: {name}
-SĐT: {phone}
-Địa chỉ: {address}
+👤 {name}
+📞 {phone}
+📍 {address}
 
-Sản phẩm:
+🛒 Sản phẩm:
 """
 
         for item in items:
@@ -211,24 +213,35 @@ Sản phẩm:
 
         message += f"\n💰 Tổng tiền: {total} đ"
 
-        send_mail(
-            "📦 Đơn hàng mới",
-            message,
-            settings.EMAIL_HOST_USER,
-            ["nmhuy396@gmail.com"],
-            fail_silently=False,
-        )
+        # =========================
+        # GỬI TELEGRAM
+        # =========================
+        try:
+            token = settings.TELEGRAM_BOT_TOKEN
+            chat_id = settings.TELEGRAM_CHAT_ID
 
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
+
+            data = {
+                "chat_id": chat_id,
+                "text": message
+            }
+
+            requests.post(url, data=data)
+
+        except Exception as e:
+            print("Lỗi gửi Telegram:", e)
+
+        # Xóa giỏ hàng
         items.delete()
 
-        return redirect('order_success')
+        # Chuyển trang thành công
+        return redirect('home')  # hoặc trang success
 
     return render(request, 'checkout.html', {
         'items': items,
         'total': total
     })
-
-
 # =========================
 # Thành công
 # =========================
