@@ -171,12 +171,14 @@ def cart_view(request):
 # =========================
 @login_required
 def checkout(request):
-    cart = Cart.objects.get(user=request.user)
+
+    cart, _ = Cart.objects.get_or_create(user=request.user)
     items = CartItem.objects.filter(cart=cart)
 
     total = sum(item.product.price * item.quantity for item in items)
 
     if request.method == "POST":
+
         name = request.POST['name']
         phone = request.POST['phone']
         address = request.POST['address']
@@ -227,21 +229,23 @@ def checkout(request):
                 "text": message
             }
 
-            requests.post(url, data=data)
+            res = requests.post(url, data=data)
+            print("Telegram:", res.text)
 
         except Exception as e:
-            print("Lỗi gửi Telegram:", e)
+            print("Lỗi Telegram:", e)
 
         # Xóa giỏ hàng
         items.delete()
 
-        # Chuyển trang thành công
-        return redirect('home')  # hoặc trang success
+        # 👉 KHÔNG redirect Zalo nữa
+        return redirect('home')  # hoặc 'success'
 
     return render(request, 'checkout.html', {
         'items': items,
         'total': total
     })
+
 # =========================
 # Thành công
 # =========================
